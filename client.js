@@ -2,7 +2,7 @@
 
 var Promise = TrelloPowerUp.Promise;
 
-var SIGMA_ICON = 'https://cdn.glitch.com/380a7bed-fba7-4128-9418-b75f0d1d7492%2Fsigma_final.svg?1495405328591';
+var SIGMA_ICON = './sigma.svg';
 
 var getBadges = function(t){
   return t.get('board', 'shared', 'costs')
@@ -14,13 +14,13 @@ var getBadges = function(t){
         // you can mix and match between static and dynamic
         text: `Cost: ${costs[id.id]}`,
         color: (costs[id.id] == 0) ? 'red' : null
-      }] : []; 
+      }] : [];
     });
   });
 };
 
 var cardButtonCallback = function(t){
-  
+
   return t.get('board', 'shared', 'costs')
   .then(function(costs){
   return t.card('id')
@@ -56,7 +56,7 @@ var cardButtonCallback = function(t){
 
 TrelloPowerUp.initialize({
   'board-buttons': function(t, options){
-    
+
     return t.get('board', 'shared', 'costs')
     .then(function(costs){
       var totalCost = 0;
@@ -75,12 +75,12 @@ TrelloPowerUp.initialize({
     return getBadges(t);
   },
   'card-buttons': function(t, options) {
-    
+
     return t.get('board', 'shared', 'costs')
     .then(function(costs){
       return t.card('id')
       .then(function(id) {
-        
+
         return [{
           // its best to use static badges unless you need your badges to refresh
           // you can mix and match between static and dynamic
@@ -88,15 +88,15 @@ TrelloPowerUp.initialize({
           text: costs && costs[id.id] ? `Cost: ${costs[id.id]}` :'Add Cost...',
           callback: cardButtonCallback
         }];
-      
+
       });
     });
-    
+
     return t.get('board', 'shared', 'cost')
     .then(function(cost){
       console.log(cost[t.card('id')]);
 
-      
+
     });
   },
 });
