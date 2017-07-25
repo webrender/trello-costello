@@ -10,8 +10,6 @@ var getBadges = function(t){
     return t.card('id')
     .then(function(id) {
       return costs && costs[id.id] ? [{
-        // its best to use static badges unless you need your badges to refresh
-        // you can mix and match between static and dynamic
         text: `Cost: ${costs[id.id]}`,
         color: (costs[id.id] == 0) ? 'red' : null
       }] : [];
@@ -29,19 +27,29 @@ var cardButtonCallback = function(t){
         title: 'Set Cost...',
         items: function(t, options) {
           var newCost = parseFloat(options.search).toFixed(2)
-          return [
-            {
-              text: !Number.isNaN(parseFloat(options.search)) ? `Set Cost to ${newCost}` : `(Enter a number to set cost.)`,
+          var buttons = [{
+            text: !Number.isNaN(parseFloat(options.search)) ? `Set Cost to ${newCost}` : `(Enter a number to set cost.)`,
+            callback: function(t) {
+              if (newCost != 'NaN') {
+                var newCosts = costs ? costs : {};
+                newCosts[id.id] = newCost;
+                t.set('board','shared','costs',newCosts);
+              }
+              return t.closePopup();
+            }
+          }];
+          if (costs[id.id]) {
+            buttons.push({
+              text: 'Remove cost.',
               callback: function(t) {
-                if (newCost != 'NaN') {
-                  var newCosts = costs ? costs : {};
-                  newCosts[id.id] = newCost;
-                  t.set('board','shared','costs',newCosts);
-                }
+                var newCosts = costs ? costs : {};
+                delete newCosts[id.id];
+                t.set('board','shared','costs',newCosts);
                 return t.closePopup();
               }
-            }
-          ];
+            });
+          }
+          return buttons;
         },
         search: {
           placeholder: 'Enter Cost',
@@ -60,15 +68,18 @@ TrelloPowerUp.initialize({
     return t.get('board', 'shared', 'costs')
     .then(function(costs){
       var totalCost = 0;
-      for (var cost in costs) {
-        totalCost = +totalCost + +costs[cost];
-      }
-      return [{
-        // we can either provide a button that has a callback function
-        // that callback function should probably open a popup, overlay, or boardBar
-        icon: SIGMA_ICON,
-        text: `Total Cost: ${totalCost.toFixed(2)}`,
-      }];
+      return t.cards('id').then(cards => {
+        var activeIds = cards.map(card => {return card.id;});
+        for (var cost in costs) {
+          if (activeIds.indexOf(cost) > -1) {
+            totalCost = +totalCost + +costs[cost];
+          }
+        }
+        return [{
+          icon: SIGMA_ICON,
+          text: `Total Cost: ${totalCost.toFixed(2)}`,
+        }];
+      });
     });
   },
   'card-badges': function(t, options){
@@ -90,13 +101,6 @@ TrelloPowerUp.initialize({
         }];
 
       });
-    });
-
-    return t.get('board', 'shared', 'cost')
-    .then(function(cost){
-      console.log(cost[t.card('id')]);
-
-
     });
   },
 });

@@ -2,7 +2,7 @@
   "name": "Costello",
   "details":"Add costs to cards & view the sum in your board bar.",
   "icon": {
-    "url": "https://cdn.glitch.com/2442c68d-7b6d-4b69-9d13-feab530aa88e%2Fglitch-icon.svg?1489773457908"
+    "url": "./sigma.svg"
   },
   "author": "webrender",
   "capabilities": [
