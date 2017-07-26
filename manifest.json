@@ -6,13 +6,10 @@
   },
   "author": "webrender",
   "capabilities": [
-    "authorization-status",
     "board-buttons",
     "callback",
     "card-badges",
-    "card-buttons",
-    "show-authorization",
-    "show-settings"
+    "card-buttons"
   ],
   "connectors": {
     "iframe": {
