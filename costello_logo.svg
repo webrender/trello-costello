@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200px" height="200px" viewBox="0 0 200 200" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 45.1 (43504) - http://www.bohemiancoding.com/sketch -->
+    <title>trello-logo-blue</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <linearGradient x1="50%" y1="0%" x2="50%" y2="100%" id="linearGradient-1">
+            <stop stop-color="#0079BF" offset="0%"></stop>
+            <stop stop-color="#0079BF" offset="100%"></stop>
+        </linearGradient>
+    </defs>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="trello-logo-blue" fill-rule="nonzero" fill="url(#linearGradient-1)">
+            <g id="Mark" transform="translate(0.000000, -0.000000)">
+                <rect id="Board" x="0" y="0" width="200" height="200" rx="25"></rect>
+            </g>
+        </g>
+        <text id="Σ" font-family="Athelas-Bold, Athelas" font-size="200" font-weight="bold" fill="#FFFFFF">
+            <tspan x="41" y="166">Σ</tspan>
+        </text>
+    </g>
+</svg>

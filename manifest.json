@@ -2,17 +2,14 @@
   "name": "Costello",
   "details":"Add costs to cards & view the sum in your board bar.",
   "icon": {
-    "url": "./sigma.svg"
+    "url": "./costello_logo.svg"
   },
   "author": "webrender",
   "capabilities": [
-    "authorization-status",
     "board-buttons",
     "callback",
     "card-badges",
-    "card-buttons",
-    "show-authorization",
-    "show-settings"
+    "card-buttons"
   ],
   "connectors": {
     "iframe": {
