@@ -38,7 +38,7 @@ var cardButtonCallback = function(t){
               return t.closePopup();
             }
           }];
-          if (costs[id.id]) {
+          if (costs && costs[id.id]) {
             buttons.push({
               text: 'Remove cost.',
               callback: function(t) {
