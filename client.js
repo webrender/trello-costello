@@ -62,9 +62,28 @@ var cardButtonCallback = function(t){
 
 };
 
+var boardButtonCallback = function(t,opts) {
+  return t.cards('id','name')
+  .then(function(cards){
+    return t.get('board','shared','costs')
+      .then(function(costs){
+        var entries = [];
+        for (var cost in costs) {
+          var cb = (a) => {t.showCard(a);};
+          entries.push({
+              text: `${costs[cost]} - ${cards.find(card => {return card.id == cost;}).name}`,
+              callback: cb.bind(null, cost)
+          });
+        }
+        return t.popup({
+          title: 'Cost Summary',
+          items: entries
+        });
+      });
+  });
+}
 TrelloPowerUp.initialize({
   'board-buttons': function(t, options){
-
     return t.get('board', 'shared', 'costs')
     .then(function(costs){
       var totalCost = 0;
@@ -78,6 +97,7 @@ TrelloPowerUp.initialize({
         return [{
           icon: SIGMA_ICON,
           text: `Total Cost: ${totalCost.toFixed(2)}`,
+          callback: boardButtonCallback
         }];
       });
     });
@@ -86,7 +106,6 @@ TrelloPowerUp.initialize({
     return getBadges(t);
   },
   'card-buttons': function(t, options) {
-
     return t.get('board', 'shared', 'costs')
     .then(function(costs){
       return t.card('id')
@@ -97,7 +116,7 @@ TrelloPowerUp.initialize({
           // you can mix and match between static and dynamic
           icon: SIGMA_ICON, // don't use a colored icon here
           text: costs && costs[id.id] ? `Cost: ${costs[id.id]}` :'Add Cost...',
-          callback: cardButtonCallback
+          callback: t.memberCanWriteToModel('card') ? cardButtonCallback : null
         }];
 
       });
