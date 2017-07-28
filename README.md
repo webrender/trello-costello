@@ -1,6 +1,6 @@
 Costello: Costs for Trello 🚀
 
-**Update: Costello is now listed on Trello by default! You no longer need to follow the procedure below, just find it in under Power-Ups in your board menu.**
+**Update: Costello is now listed on Trello by default! You no longer need to follow the procedure below, just find it under Power-Ups in your board menu.**
 
 Hey there 👋
 
