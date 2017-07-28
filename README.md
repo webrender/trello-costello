@@ -1,5 +1,7 @@
 Costello: Costs for Trello 🚀
 
+**Update: Costello is now listed on Trello by default! You no longer need to follow the procedure below, just find it in under Power-Ups in your board menu.**
+
 Hey there 👋
 
 This is a Trello Power-Up which lets you add costs to cards and provides a sum of those costs as a board item.  
