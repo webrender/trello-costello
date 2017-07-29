@@ -68,12 +68,15 @@ var boardButtonCallback = function(t,opts) {
     return t.get('board','shared','costs')
       .then(function(costs){
         var entries = [];
+        var activeIds = cards.map(card => {return card.id;});
         for (var cost in costs) {
-          var cb = (a) => {t.showCard(a);};
-          entries.push({
-              text: `${costs[cost]} - ${cards.find(card => {return card.id == cost;}).name}`,
-              callback: cb.bind(null, cost)
-          });
+          if (activeIds.indexOf(cost) > -1) {
+            var cb = (a) => {t.showCard(a);};
+            entries.push({
+                text: `${costs[cost]} - ${cards.find(card => {return card.id == cost;}).name}`,
+                callback: cb.bind(null, cost)
+            });
+          } 
         }
         return t.popup({
           title: 'Cost Summary',
