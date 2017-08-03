@@ -79,7 +79,6 @@ var boardButtonCallback = function(t,opts) {
             text: `${costs[cost]} - ${cards.find(card => {return card.id == cost;}).name}`,
             callback: cb.bind(null, cost)
         });
-        console.log(costs[cost]);
         if (lists.find(list => {return cards.find(card => {return card.id == cost;}).idList == list.id})){
           var thisList = listSums[lists.find(list => {return cards.find(card => {return card.id == cost;}).idList == list.id}).name];
           if (!thisList) {
@@ -89,7 +88,6 @@ var boardButtonCallback = function(t,opts) {
         }
       }
     }
-    console.log(listSums);
     entries.push({text: '➖➖➖➖➖➖➖➖➖➖➖'});
     entries.push({text: 'SUMMARY BY COLUMN:'});
     for (var listSum in listSums) {
