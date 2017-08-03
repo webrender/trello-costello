@@ -63,28 +63,47 @@ var cardButtonCallback = function(t){
 };
 
 var boardButtonCallback = function(t,opts) {
-  return t.cards('id','name')
+  return t.lists('id', 'name')
+  .then(function(lists){
+  return t.cards('id','name','idList')
   .then(function(cards){
-    return t.get('board','shared','costs')
-      .then(function(costs){
-        var entries = [];
-        var activeIds = cards.map(card => {return card.id;});
-        for (var cost in costs) {
-          if (activeIds.indexOf(cost) > -1) {
-            var cb = (a) => {t.showCard(a);};
-            entries.push({
-                text: `${costs[cost]} - ${cards.find(card => {return card.id == cost;}).name}`,
-                callback: cb.bind(null, cost)
-            });
-          } 
-        }
-        return t.popup({
-          title: 'Cost Summary',
-          items: entries
+  return t.get('board','shared','costs')
+  .then(function(costs){
+    var entries = [];
+    var listSums = {};
+    var activeIds = cards.map(card => {return card.id;});
+    for (var cost in costs) {
+      if (activeIds.indexOf(cost) > -1) {
+        var cb = (a) => {t.showCard(a);};
+        entries.push({
+            text: `${costs[cost]} - ${cards.find(card => {return card.id == cost;}).name}`,
+            callback: cb.bind(null, cost)
         });
-      });
+        console.log(costs[cost]);
+        if (lists.find(list => {return cards.find(card => {return card.id == cost;}).idList == list.id})){
+          var thisList = listSums[lists.find(list => {return cards.find(card => {return card.id == cost;}).idList == list.id}).name];
+          if (!thisList) {
+            listSums[lists.find(list => {return cards.find(card => {return card.id == cost;}).idList == list.id}).name] = 0;
+          }
+          listSums[lists.find(list => {return cards.find(card => {return card.id == cost;}).idList == list.id}).name] += parseFloat(costs[cost]);
+        }
+      }
+    }
+    console.log(listSums);
+    entries.push({text: '➖➖➖➖➖➖➖➖➖➖➖'});
+    entries.push({text: 'SUMMARY BY COLUMN:'});
+    for (var listSum in listSums) {
+      entries.push({text: `${listSum}: ${parseFloat(listSums[listSum]).toFixed(2)}`});
+    }
+    return t.popup({
+      title: 'Cost Summary',
+      items: entries
+    });
+  });
+  });
   });
 }
+
 TrelloPowerUp.initialize({
   'board-buttons': function(t, options){
     return t.get('board', 'shared', 'costs')
