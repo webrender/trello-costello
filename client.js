@@ -10,7 +10,7 @@ var getBadges = function(t){
     return t.card('id')
     .then(function(id) {
       return costs && costs[id.id] ? [{
-        text: `Cost: ${costs[id.id]}`,
+        text: 'Cost: ' + costs[id.id],
         color: (costs[id.id] == 0) ? 'red' : null
       }] : [];
     });
@@ -28,7 +28,7 @@ var cardButtonCallback = function(t){
         items: function(t, options) {
           var newCost = parseFloat(options.search).toFixed(2)
           var buttons = [{
-            text: !Number.isNaN(parseFloat(options.search)) ? `Set Cost to ${newCost}` : `(Enter a number to set cost.)`,
+            text: !Number.isNaN(parseFloat(options.search)) ? 'Set Cost to ' + newCost : '(Enter a number to set cost.)',
             callback: function(t) {
               if (newCost != 'NaN') {
                 var newCosts = costs ? costs : {};
@@ -71,27 +71,27 @@ var boardButtonCallback = function(t,opts) {
   .then(function(costs){
     var entries = [];
     var listSums = {};
-    var activeIds = cards.map(card => {return card.id;});
+    var activeIds = cards.map(function(card){return card.id;});
     for (var cost in costs) {
       if (activeIds.indexOf(cost) > -1) {
-        var cb = (a) => {t.showCard(a);};
+        var cb = function(a){t.showCard(a);};
         entries.push({
-            text: `${costs[cost]} - ${cards.find(card => {return card.id == cost;}).name}`,
+            text: costs[cost] + ' - ' + cards.find(function(card){return card.id == cost;}).name,
             callback: cb.bind(null, cost)
         });
-        if (lists.find(list => {return cards.find(card => {return card.id == cost;}).idList == list.id})){
-          var thisList = listSums[lists.find(list => {return cards.find(card => {return card.id == cost;}).idList == list.id}).name];
+        if (lists.find(function(list){return cards.find(function(card){return card.id == cost;}).idList == list.id})){
+          var thisList = listSums[lists.find(function(list){return cards.find(function(card){return card.id == cost;}).idList == list.id}).name];
           if (!thisList) {
-            listSums[lists.find(list => {return cards.find(card => {return card.id == cost;}).idList == list.id}).name] = 0;
+            listSums[lists.find(function(list){return cards.find(function(card){return card.id == cost;}).idList == list.id}).name] = 0;
           }
-          listSums[lists.find(list => {return cards.find(card => {return card.id == cost;}).idList == list.id}).name] += parseFloat(costs[cost]);
+          listSums[lists.find(function(list){return cards.find(function(card){return card.id == cost;}).idList == list.id}).name] += parseFloat(costs[cost]);
         }
       }
     }
     entries.push({text: '➖➖➖➖➖➖➖➖➖➖➖'});
     entries.push({text: 'SUMMARY BY COLUMN:'});
     for (var listSum in listSums) {
-      entries.push({text: `${listSum}: ${parseFloat(listSums[listSum]).toFixed(2)}`});
+      entries.push({text: listSum + ': ' + parseFloat(listSums[listSum]).toFixed(2)});
     }
     return t.popup({
       title: 'Cost Summary',
@@ -107,8 +107,8 @@ TrelloPowerUp.initialize({
     return t.get('board', 'shared', 'costs')
     .then(function(costs){
       var totalCost = 0;
-      return t.cards('id').then(cards => {
-        var activeIds = cards.map(card => {return card.id;});
+      return t.cards('id').then(function(cards){
+        var activeIds = cards.map(function(card){return card.id;});
         for (var cost in costs) {
           if (activeIds.indexOf(cost) > -1) {
             totalCost = +totalCost + +costs[cost];
@@ -116,7 +116,7 @@ TrelloPowerUp.initialize({
         }
         return [{
           icon: SIGMA_ICON,
-          text: `Total Cost: ${totalCost.toFixed(2)}`,
+          text: 'Total Cost: ' + totalCost.toFixed(2),
           callback: boardButtonCallback
         }];
       });
@@ -135,7 +135,7 @@ TrelloPowerUp.initialize({
           // its best to use static badges unless you need your badges to refresh
           // you can mix and match between static and dynamic
           icon: SIGMA_ICON, // don't use a colored icon here
-          text: costs && costs[id.id] ? `Cost: ${costs[id.id]}` :'Add Cost...',
+          text: costs && costs[id.id] ? 'Cost: ' + costs[id.id] :'Add Cost...',
           callback: t.memberCanWriteToModel('card') ? cardButtonCallback : null
         }];
 
