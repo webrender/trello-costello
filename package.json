@@ -1,0 +1,16 @@
+{
+	"name": "trello-costello",
+	"description": "Add costs to cards & view the sum in your board bar.",
+	"main": "server.js",
+	"scripts": {
+		"start": "node server.js"
+	},
+	"dependencies": {
+    "express": "^4.12.4"
+	},
+	"keywords": [
+		"node",
+		"express"
+	],
+	"license": "MIT"
+}
