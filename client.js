@@ -32,7 +32,6 @@ var getBadges = function(t){
     }
     
     if (oldCosts && oldCosts[card.id]) {
-      console.log('oldCosts: ', oldCosts);
       return t.set('card', 'shared', 'costs', {'Total Cost': oldCosts[card.id]})
       .then(function() {
         delete oldCosts[card.id];
