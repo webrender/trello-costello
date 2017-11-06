@@ -22,7 +22,7 @@ var getBadges = function(t){
         if (costs) {
           Object.keys(costs).forEach(function(cost){
             badges.push({
-              text: cost + ': ' + costs[cost],
+              text: cost + ': ' + parseFloat(costs[cost]).toLocaleString(undefined,{minimumFractionDigits:2}),
               color: (costs[cost] == 0) ? 'red' : null
             });
           });
@@ -56,7 +56,7 @@ var cardButtonCallback = function(t){
       items: function(t, options) {
         var newCost = parseFloat(options.search).toFixed(2)
         var buttons = [{
-          text: !Number.isNaN(parseFloat(options.search)) ? 'Set Cost to ' + newCost : '(Enter a number to set cost.)',
+          text: !Number.isNaN(parseFloat(options.search)) ? 'Set Cost to ' + parseFloat(newCost).toLocaleString(undefined,{minimumFractionDigits:2}) : '(Enter a number to set cost.)',
           callback: function(t) {
             if (newCost != 'NaN') {
               var newCosts = costs ? costs : {};
@@ -107,8 +107,8 @@ var boardButtonCallback = function(t,opts) {
           var cost = cards[idx].id;
           if (activeIds.indexOf(cost) > -1) {
             var cb = function(a){t.showCard(a);};
-            entries.push({
-                text: cardCosts['Total Cost'] + ' - ' + cards.find(function(card){return card.id == cost;}).name,
+            entries.push({              
+                text: parseFloat(cardCosts['Total Cost']).toLocaleString(undefined,{minimumFractionDigits:2}) + ' - ' + cards.find(function(card){return card.id == cost;}).name,
                 callback: cb.bind(null, cost)
             });
             if (lists.find(function(list){return cards.find(function(card){return card.id == cost;}).idList == list.id})){
@@ -123,8 +123,8 @@ var boardButtonCallback = function(t,opts) {
       });
       entries.push({text: '➖➖➖➖➖➖➖➖➖➖➖'});
       entries.push({text: 'SUMMARY BY COLUMN:'});
-      for (var listSum in listSums) {
-        entries.push({text: listSum + ': ' + parseFloat(listSums[listSum]).toFixed(2)});
+      for (var listSum in listSums) {        
+        entries.push({text: listSum + ': ' + parseFloat(listSums[listSum]).toFixed(2).toLocaleString(undefined,{minimumFractionDigits:2})});
       }
       return t.popup({
         title: 'Cost Summary',
@@ -164,7 +164,9 @@ TrelloPowerUp.initialize({
         Object.keys(sums).forEach(function(sum) {
           boardButtons.push({
             icon: SIGMA_ICON,
-            text: sum + ': ' + sums[sum].toFixed(2),
+          // parseFloat(costs[cost]).toLocaleString(undefined,{minimumFractionDigits:2})
+            
+            text: sum + ': ' + parseFloat(sums[sum]).toLocaleString(undefined,{minimumFractionDigits:2}),
             callback: boardButtonCallback
           });
         });
@@ -183,7 +185,7 @@ TrelloPowerUp.initialize({
         // its best to use static badges unless you need your badges to refresh
         // you can mix and match between static and dynamic
         icon: SIGMA_ICON, // don't use a colored icon here
-        text: costs && costs['Total Cost'] ? 'Cost: ' + costs['Total Cost'] :'Add Cost...',
+        text: costs && costs['Total Cost'] ? 'Cost: ' + parseFloat(costs['Total Cost']).toLocaleString(undefined,{minimumFractionDigits:2}) :'Add Cost...',
         callback: t.memberCanWriteToModel('card') ? cardButtonCallback : null
       });
       return buttons;
