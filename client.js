@@ -89,9 +89,10 @@ var cardButtonCallback = function(t){
 };
 
 var boardButtonCallback = function(t,opts) {
+  
   return t.lists('id', 'name')
   .then(function(lists){
-  return t.cards('id','name','idList')
+  return t.cards('id','name','idList', 'labels')
   .then(function(cards){
     var getCosts = [];
     cards.forEach(function(card){
@@ -100,8 +101,58 @@ var boardButtonCallback = function(t,opts) {
     return Promise.all(getCosts)
     .then(function(costArray) {
       var entries = [];
-      var listSums = {};
       var activeIds = cards.map(function(card){return card.id;});
+      var summaryByColumn = function(t,opts) {
+        var listSums = {};
+        var columnEntries = [];
+        costArray.forEach(function(cardCosts, idx) {
+          if (cardCosts && Object.keys(cardCosts).length > 0) {
+            var cost = cards[idx].id;
+            if (activeIds.indexOf(cost) > -1) {
+              if (lists.find(function(list){return cards.find(function(card){return card.id == cost;}).idList == list.id})){
+                var thisList = listSums[lists.find(function(list){return cards.find(function(card){return card.id == cost;}).idList == list.id}).name];
+                if (!thisList) {
+                  listSums[lists.find(function(list){return cards.find(function(card){return card.id == cost;}).idList == list.id}).name] = 0;
+                }
+                listSums[lists.find(function(list){return cards.find(function(card){return card.id == cost;}).idList == list.id}).name] += parseFloat(cardCosts['Total Cost']);
+              }
+            }
+          }
+        });
+        for (var listSum in listSums) {        
+          columnEntries.push({text: listSum + ': ' + parseFloat(listSums[listSum]).toFixed(2).toLocaleString(undefined,{minimumFractionDigits:2})});
+        }
+        return t.popup({
+          title: 'Summary by Column',
+          items: columnEntries
+        });
+      }
+      
+      var summaryByLabel = function(t,opts) {
+        var listSums = {};
+        var columnEntries = [];
+        cards.forEach(function(card, idx){ 
+          if (card.labels.length > 0) {
+            card.labels.forEach(function(label) {
+              if (listSums[label.name]) {
+                listSums[label.name] += parseFloat(costArray[idx]['Total Cost'])
+              } else {
+                listSums[label.name] = parseFloat(costArray[idx]['Total Cost'])
+              }
+            });
+          }
+        });
+        for (var listSum in listSums) {        
+          columnEntries.push({text: listSum + ': ' + parseFloat(listSums[listSum]).toFixed(2).toLocaleString(undefined,{minimumFractionDigits:2})});
+        }
+        return t.popup({
+          title: 'Summary by Label',
+          items: columnEntries
+        });
+      }
+      
+      entries.push({text: '🔍 Summary by Column...', callback: summaryByColumn});
+      entries.push({text: '🔍 Summary by Label...', callback: summaryByLabel});
       costArray.forEach(function(cardCosts, idx) {
         if (cardCosts && Object.keys(cardCosts).length > 0) {
           var cost = cards[idx].id;
@@ -111,21 +162,9 @@ var boardButtonCallback = function(t,opts) {
                 text: parseFloat(cardCosts['Total Cost']).toLocaleString(undefined,{minimumFractionDigits:2}) + ' - ' + cards.find(function(card){return card.id == cost;}).name,
                 callback: cb.bind(null, cost)
             });
-            if (lists.find(function(list){return cards.find(function(card){return card.id == cost;}).idList == list.id})){
-              var thisList = listSums[lists.find(function(list){return cards.find(function(card){return card.id == cost;}).idList == list.id}).name];
-              if (!thisList) {
-                listSums[lists.find(function(list){return cards.find(function(card){return card.id == cost;}).idList == list.id}).name] = 0;
-              }
-              listSums[lists.find(function(list){return cards.find(function(card){return card.id == cost;}).idList == list.id}).name] += parseFloat(cardCosts['Total Cost']);
-            }
           }
         }
       });
-      entries.push({text: '➖➖➖➖➖➖➖➖➖➖➖'});
-      entries.push({text: 'SUMMARY BY COLUMN:'});
-      for (var listSum in listSums) {        
-        entries.push({text: listSum + ': ' + parseFloat(listSums[listSum]).toFixed(2).toLocaleString(undefined,{minimumFractionDigits:2})});
-      }
       return t.popup({
         title: 'Cost Summary',
         items: entries
