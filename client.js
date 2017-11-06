@@ -5,18 +5,46 @@ var Promise = TrelloPowerUp.Promise;
 var SIGMA_ICON = './sigma.svg';
 
 var getBadges = function(t){
-  return t.get('card', 'shared', 'costs')
-  .then(function(costs){
-    var badges = [];
-    if (costs) {
-      Object.keys(costs).forEach(function(cost){
-        badges.push({
-          text: cost + ': ' + costs[cost],
-          color: (costs[cost] == 0) ? 'red' : null
-        });
+  // we used to store costs in a board-level object, but 
+  // https://github.com/webrender/trello-costello/issues/11
+  // reported that the length of the field could exceed the 
+  // 4,000 character limit for trello data.  costs are now stored
+  // in card level objects, and this is here to convert old board-
+  // level costs to the new card-level objects
+  return t.card('id')
+  .then(function(card) {
+  return t.get('board', 'shared', 'costs')
+  .then(function(oldCosts) {
+    var returnCosts = function () {
+      return t.get('card', 'shared', 'costs')
+      .then(function(costs){
+        var badges = [];
+        if (costs) {
+          Object.keys(costs).forEach(function(cost){
+            badges.push({
+              text: cost + ': ' + costs[cost],
+              color: (costs[cost] == 0) ? 'red' : null
+            });
+          });
+        }
+        return badges;
       });
     }
-    return badges;
+    
+    if (oldCosts && oldCosts[card.id]) {
+      console.log('oldCosts: ', oldCosts);
+      return t.set('card', 'shared', 'costs', {'Total Cost': oldCosts[card.id]})
+      .then(function() {
+        delete oldCosts[card.id];
+        return t.set('board', 'shared', 'costs', oldCosts)
+        .then(function() {
+          return returnCosts();
+        });
+      })
+    } else {
+      return returnCosts();
+    }
+  });
   });
 };
 
@@ -110,69 +138,39 @@ var boardButtonCallback = function(t,opts) {
 
 TrelloPowerUp.initialize({
   'board-buttons': function(t, options){
-    var totalCost = 0;
-    
-    var processCards = function() {
-      return t.cards('id')
-        .then(function(cards) {
-          var getCosts = [];
-          cards.forEach(function(card){
-            getCosts.push(t.get(card.id, 'shared', 'costs'))
-          });
-          return Promise.all(getCosts)
-          .then(function(costArray) {
-            var sums = {};
-            // for each card
-            costArray.forEach(function(cardCosts) {
-              // for each cost on the card
-              if (cardCosts) {
-                Object.keys(cardCosts).forEach(function(cost) {
-                  // find the sum associated with this cost
-                  if(sums[cost]) {
-                    sums[cost] += parseFloat(cardCosts[cost]);
-                  } else {
-                    sums[cost] = parseFloat(cardCosts[cost]);
-                  }
-                });
+    return t.cards('id')
+    .then(function(cards) {
+      var getCosts = [];
+      cards.forEach(function(card){
+        getCosts.push(t.get(card.id, 'shared', 'costs'))
+      });
+      return Promise.all(getCosts)
+      .then(function(costArray) {
+        var sums = {};
+        // for each card
+        costArray.forEach(function(cardCosts) {
+          // for each cost on the card
+          if (cardCosts) {
+            Object.keys(cardCosts).forEach(function(cost) {
+              // find the sum associated with this cost
+              if(sums[cost]) {
+                sums[cost] += parseFloat(cardCosts[cost]);
+              } else {
+                sums[cost] = parseFloat(cardCosts[cost]);
               }
             });
-            var boardButtons = [];
-            Object.keys(sums).forEach(function(sum) {
-              boardButtons.push({
-                icon: SIGMA_ICON,
-                text: sum + ': ' + sums[sum].toFixed(2),
-                callback: boardButtonCallback
-              });
-            });
-            return boardButtons;
-          })
+          }
         });
-    }
-    
-    // we used to store costs in a board-level object, but 
-    // https://github.com/webrender/trello-costello/issues/11
-    // reported that the length of the field could exceed the 
-    // 4,000 character limit for trello data.  costs are now stored
-    // in card level objects, and this is here to convert old board-
-    // level costs to the new card-level objects
-    
-    return t.get('board', 'shared', 'costs')
-    .then(function(oldCosts){
-      if (oldCosts && Object.keys(oldCosts).length > 0) {
-        var updateCards = [];
-        Object.keys(oldCosts).forEach(function(cost) {
-          updateCards.push(t.set(cost, 'shared', 'costs', {'Total Cost': oldCosts[cost]}));
-        })
-        return Promise.all(updateCards)
-        .then(function() {
-          return t.remove('board', 'shared', 'costs')
-          .then(function() {
-            return processCards();          
+        var boardButtons = [];
+        Object.keys(sums).forEach(function(sum) {
+          boardButtons.push({
+            icon: SIGMA_ICON,
+            text: sum + ': ' + sums[sum].toFixed(2),
+            callback: boardButtonCallback
           });
         });
-      } else {
-        return processCards();
-      }
+        return boardButtons;
+      })
     });
   },
   'card-badges': function(t, options){
