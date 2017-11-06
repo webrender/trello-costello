@@ -5,61 +5,88 @@ var Promise = TrelloPowerUp.Promise;
 var SIGMA_ICON = './sigma.svg';
 
 var getBadges = function(t){
+  // we used to store costs in a board-level object, but 
+  // https://github.com/webrender/trello-costello/issues/11
+  // reported that the length of the field could exceed the 
+  // 4,000 character limit for trello data.  costs are now stored
+  // in card level objects, and this is here to convert old board-
+  // level costs to the new card-level objects
+  return t.card('id')
+  .then(function(card) {
   return t.get('board', 'shared', 'costs')
-  .then(function(costs){
-    return t.card('id')
-    .then(function(id) {
-      return costs && costs[id.id] ? [{
-        text: 'Cost: ' + costs[id.id],
-        color: (costs[id.id] == 0) ? 'red' : null
-      }] : [];
-    });
+  .then(function(oldCosts) {
+    var returnCosts = function () {
+      return t.get('card', 'shared', 'costs')
+      .then(function(costs){
+        var badges = [];
+        if (costs) {
+          Object.keys(costs).forEach(function(cost){
+            badges.push({
+              text: cost + ': ' + costs[cost],
+              color: (costs[cost] == 0) ? 'red' : null
+            });
+          });
+        }
+        return badges;
+      });
+    }
+    
+    if (oldCosts && oldCosts[card.id]) {
+      console.log('oldCosts: ', oldCosts);
+      return t.set('card', 'shared', 'costs', {'Total Cost': oldCosts[card.id]})
+      .then(function() {
+        delete oldCosts[card.id];
+        return t.set('board', 'shared', 'costs', oldCosts)
+        .then(function() {
+          return returnCosts();
+        });
+      })
+    } else {
+      return returnCosts();
+    }
+  });
   });
 };
 
 var cardButtonCallback = function(t){
 
-  return t.get('board', 'shared', 'costs')
+  return t.get('card', 'shared', 'costs')
   .then(function(costs){
-  return t.card('id')
-    .then(function(id) {
-      return t.popup({
-        title: 'Set Cost...',
-        items: function(t, options) {
-          var newCost = parseFloat(options.search).toFixed(2)
-          var buttons = [{
-            text: !Number.isNaN(parseFloat(options.search)) ? 'Set Cost to ' + newCost : '(Enter a number to set cost.)',
+    return t.popup({
+      title: 'Set Cost...',
+      items: function(t, options) {
+        var newCost = parseFloat(options.search).toFixed(2)
+        var buttons = [{
+          text: !Number.isNaN(parseFloat(options.search)) ? 'Set Cost to ' + newCost : '(Enter a number to set cost.)',
+          callback: function(t) {
+            if (newCost != 'NaN') {
+              var newCosts = costs ? costs : {};
+              newCosts['Total Cost'] = newCost;
+              t.set('card','shared','costs', newCosts);
+            }
+            return t.closePopup();
+          }
+        }];
+        if (costs && costs['Total Cost']) {
+          buttons.push({
+            text: 'Remove cost.',
             callback: function(t) {
-              if (newCost != 'NaN') {
-                var newCosts = costs ? costs : {};
-                newCosts[id.id] = newCost;
-                t.set('board','shared','costs',newCosts);
-              }
+              var newCosts = costs;
+              delete newCosts['Total Cost'];
+              t.set('card','shared','costs', newCosts);
               return t.closePopup();
             }
-          }];
-          if (costs && costs[id.id]) {
-            buttons.push({
-              text: 'Remove cost.',
-              callback: function(t) {
-                var newCosts = costs ? costs : {};
-                delete newCosts[id.id];
-                t.set('board','shared','costs',newCosts);
-                return t.closePopup();
-              }
-            });
-          }
-          return buttons;
-        },
-        search: {
-          placeholder: 'Enter Cost',
-          empty: 'Error',
-          searching: 'Processing...'
+          });
         }
-      });
+        return buttons;
+      },
+      search: {
+        placeholder: 'Enter Cost',
+        empty: 'Error',
+        searching: 'Processing...'
+      }
     });
   });
-
 };
 
 var boardButtonCallback = function(t,opts) {
@@ -67,79 +94,100 @@ var boardButtonCallback = function(t,opts) {
   .then(function(lists){
   return t.cards('id','name','idList')
   .then(function(cards){
-  return t.get('board','shared','costs')
-  .then(function(costs){
-    var entries = [];
-    var listSums = {};
-    var activeIds = cards.map(function(card){return card.id;});
-    for (var cost in costs) {
-      if (activeIds.indexOf(cost) > -1) {
-        var cb = function(a){t.showCard(a);};
-        entries.push({
-            text: costs[cost] + ' - ' + cards.find(function(card){return card.id == cost;}).name,
-            callback: cb.bind(null, cost)
-        });
-        if (lists.find(function(list){return cards.find(function(card){return card.id == cost;}).idList == list.id})){
-          var thisList = listSums[lists.find(function(list){return cards.find(function(card){return card.id == cost;}).idList == list.id}).name];
-          if (!thisList) {
-            listSums[lists.find(function(list){return cards.find(function(card){return card.id == cost;}).idList == list.id}).name] = 0;
+    var getCosts = [];
+    cards.forEach(function(card){
+      getCosts.push(t.get(card.id, 'shared', 'costs'))
+    });
+    return Promise.all(getCosts)
+    .then(function(costArray) {
+      var entries = [];
+      var listSums = {};
+      var activeIds = cards.map(function(card){return card.id;});
+      costArray.forEach(function(cardCosts, idx) {
+        if (cardCosts && Object.keys(cardCosts).length > 0) {
+          var cost = cards[idx].id;
+          if (activeIds.indexOf(cost) > -1) {
+            var cb = function(a){t.showCard(a);};
+            entries.push({
+                text: cardCosts['Total Cost'] + ' - ' + cards.find(function(card){return card.id == cost;}).name,
+                callback: cb.bind(null, cost)
+            });
+            if (lists.find(function(list){return cards.find(function(card){return card.id == cost;}).idList == list.id})){
+              var thisList = listSums[lists.find(function(list){return cards.find(function(card){return card.id == cost;}).idList == list.id}).name];
+              if (!thisList) {
+                listSums[lists.find(function(list){return cards.find(function(card){return card.id == cost;}).idList == list.id}).name] = 0;
+              }
+              listSums[lists.find(function(list){return cards.find(function(card){return card.id == cost;}).idList == list.id}).name] += parseFloat(cardCosts['Total Cost']);
+            }
           }
-          listSums[lists.find(function(list){return cards.find(function(card){return card.id == cost;}).idList == list.id}).name] += parseFloat(costs[cost]);
         }
+      });
+      entries.push({text: '➖➖➖➖➖➖➖➖➖➖➖'});
+      entries.push({text: 'SUMMARY BY COLUMN:'});
+      for (var listSum in listSums) {
+        entries.push({text: listSum + ': ' + parseFloat(listSums[listSum]).toFixed(2)});
       }
-    }
-    entries.push({text: '➖➖➖➖➖➖➖➖➖➖➖'});
-    entries.push({text: 'SUMMARY BY COLUMN:'});
-    for (var listSum in listSums) {
-      entries.push({text: listSum + ': ' + parseFloat(listSums[listSum]).toFixed(2)});
-    }
-    return t.popup({
-      title: 'Cost Summary',
-      items: entries
+      return t.popup({
+        title: 'Cost Summary',
+        items: entries
+      });
     });
   });
   });
-  });
-}
+};
 
 TrelloPowerUp.initialize({
   'board-buttons': function(t, options){
-    return t.get('board', 'shared', 'costs')
-    .then(function(costs){
-      var totalCost = 0;
-      return t.cards('id').then(function(cards){
-        var activeIds = cards.map(function(card){return card.id;});
-        for (var cost in costs) {
-          if (activeIds.indexOf(cost) > -1) {
-            totalCost = +totalCost + +costs[cost];
-          }
-        }
-        return [{
-          icon: SIGMA_ICON,
-          text: 'Total Cost: ' + totalCost.toFixed(2),
-          callback: boardButtonCallback
-        }];
+    return t.cards('id')
+    .then(function(cards) {
+      var getCosts = [];
+      cards.forEach(function(card){
+        getCosts.push(t.get(card.id, 'shared', 'costs'))
       });
+      return Promise.all(getCosts)
+      .then(function(costArray) {
+        var sums = {};
+        // for each card
+        costArray.forEach(function(cardCosts) {
+          // for each cost on the card
+          if (cardCosts) {
+            Object.keys(cardCosts).forEach(function(cost) {
+              // find the sum associated with this cost
+              if(sums[cost]) {
+                sums[cost] += parseFloat(cardCosts[cost]);
+              } else {
+                sums[cost] = parseFloat(cardCosts[cost]);
+              }
+            });
+          }
+        });
+        var boardButtons = [];
+        Object.keys(sums).forEach(function(sum) {
+          boardButtons.push({
+            icon: SIGMA_ICON,
+            text: sum + ': ' + sums[sum].toFixed(2),
+            callback: boardButtonCallback
+          });
+        });
+        return boardButtons;
+      })
     });
   },
   'card-badges': function(t, options){
     return getBadges(t);
   },
   'card-buttons': function(t, options) {
-    return t.get('board', 'shared', 'costs')
+    return t.get('card', 'shared', 'costs')
     .then(function(costs){
-      return t.card('id')
-      .then(function(id) {
-
-        return [{
-          // its best to use static badges unless you need your badges to refresh
-          // you can mix and match between static and dynamic
-          icon: SIGMA_ICON, // don't use a colored icon here
-          text: costs && costs[id.id] ? 'Cost: ' + costs[id.id] :'Add Cost...',
-          callback: t.memberCanWriteToModel('card') ? cardButtonCallback : null
-        }];
-
+      var buttons = [];  
+      buttons.push({
+        // its best to use static badges unless you need your badges to refresh
+        // you can mix and match between static and dynamic
+        icon: SIGMA_ICON, // don't use a colored icon here
+        text: costs && costs['Total Cost'] ? 'Cost: ' + costs['Total Cost'] :'Add Cost...',
+        callback: t.memberCanWriteToModel('card') ? cardButtonCallback : null
       });
+      return buttons;
     });
   },
 });
