@@ -49,7 +49,10 @@ var getBadges = function(t){
             newCostArray.push(costs['Total Cost']);
             return t.set('card', 'shared', 'costs', newCostArray)
             .then(function() {
-              return getBadges(t);              
+              return t.set('board','shared','refresh',Math.random())
+              .then(function() {
+                return getBadges(t);               
+              });
             });
           }
         } else {
