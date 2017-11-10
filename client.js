@@ -156,9 +156,9 @@ var getBoardButtons = function(t) {
                       card.labels.forEach(function(label) {
                         var displayName = label.name || label.color;
                         if (listSums[displayName]) {
-                          listSums[displayName] += costArray[cardIdx][idx];
+                          listSums[displayName] += parseFloat(costArray[cardIdx][idx]);
                         } else {
-                          listSums[displayName] = costArray[cardIdx][idx];
+                          listSums[displayName] = parseFloat(costArray[cardIdx][idx]);
                         }
                       });
                     }
