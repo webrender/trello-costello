@@ -151,14 +151,17 @@ var getBoardButtons = function(t) {
                 var listSums = {};
                 var columnEntries = [];
                 cards.forEach(function(card, cardIdx){ 
-                  if (card.labels.length > 0) {
-                    card.labels.forEach(function(label) {
-                      if (listSums[label.name]) {
-                        listSums[label.name] += parseFloat(costArray[cardIdx][idx])
-                      } else {
-                        listSums[label.name] = parseFloat(costArray[cardIdx][idx])
-                      }
-                    });
+                  if (costArray[cardIdx]) {
+                    if (card.labels.length > 0) {
+                      card.labels.forEach(function(label) {
+                        var displayName = label.name || label.color;
+                        if (listSums[displayName]) {
+                          listSums[displayName] += costArray[cardIdx][idx];
+                        } else {
+                          listSums[displayName] = costArray[cardIdx][idx];
+                        }
+                      });
+                    }
                   }
                 });
 
