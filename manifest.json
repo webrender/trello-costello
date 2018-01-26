@@ -1,6 +1,6 @@
 {
   "name": "Costello",
-  "details":"Add costs to cards & view the sum in your board bar.",
+  "details":"With the Costello Power-Up enabled, you'll be able to open a card and set a cost. That cost will be displayed on the front of the card (costs of zero are in red) and a sum of the costs will be displayed in the top right corner of your board.\n\n* Add costs to cards\n* See a summary of those costs on your board\n* Costello costs nothing!\n* [Source available on Github](https://github.com/webrender/trello-costello\n\n### Screenshot\n\n![Costello Demo GIF](https://info.trello.com/hubfs/Power-Ups/Costello/costello_demo.gif?t=1516965722234)",
   "icon": {
     "url": "./costello_logo.svg"
   },
