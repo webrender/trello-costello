@@ -252,8 +252,8 @@ var getSettings = function(t) {
                             if (cardCostsArray) {
                               var updates = [];
                               cardCostsArray.forEach(function(cardCosts, cardIdx) {
-                                if (cardCosts && cardCosts[idx]) {
-                                  cardCosts[idx] = false;
+                                if (cardCosts) {
+                                  cardCosts.splice(idx, 1);
                                 }
                                 updates.push(t.set(cards[cardIdx].id, 'shared', 'costs', cardCosts));
                               });
@@ -293,6 +293,40 @@ var getSettings = function(t) {
             });
           });
         }
+        buttons.push({
+          icon: SIGMA_ICON, 
+          text: 'Reset Cost Fields',
+          callback: function(t) {
+            return t.popup({
+              title: 'Reset Cost Fields: Are you sure?',
+              items: function(t, options) {
+                var buttons = [{
+                  text: 'Yes, reset all fields.',
+                  callback: function(t) {
+                    // create array
+                    var newCostFields = ['Total Cost'];
+                    return t.set('board', 'shared', 'costFields', newCostFields)
+                    .then(function() {
+                        return t.cards('id')
+                        .then(function(cards) {
+                          var requests = []
+                          cards.forEach(function(card) {
+                            requests.push(t.remove(card.id, 'shared', 'costs', ));
+                          });
+                          return Promise.all(requests)
+                          .then(function(cardCostsArray) {
+                            t.closePopup();
+                            return getBadges(t);
+                          });
+                        });
+                    });
+                  }
+                }];
+                return buttons;
+              },
+            });
+          }
+        });
         return buttons;
       },
       search: {
@@ -323,7 +357,7 @@ var getButtons = function(t) {
                 text: !Number.isNaN(parseFloat(options.search)) ? 'Set ' + costFields[idx] + ' to ' + parseFloat(newCost).toLocaleString(undefined,{minimumFractionDigits:2}) : '(Enter a number to set ' + costFields[idx] + '.)',
                 callback: function(t) {
                   if (newCost != 'NaN') {
-                    var newCosts = costs ? costs : Array(costFields.length).fill(false);
+                    var newCosts = costs ? costs : Array(costFields.length).fill(null);
                     newCosts[idx] = newCost;
                     return t.set('card','shared','costs', newCosts)
                     .then(function() {
@@ -340,8 +374,8 @@ var getButtons = function(t) {
                 buttons.push({
                   text: 'Remove ' + costFields[idx] + '.',
                   callback: function(t) {
-                    var newCosts = costs ? costs : Array(costFields.length).fill(false);
-                    newCosts[idx] = false;
+                    var newCosts = costs ? costs : Array(costFields.length).fill(null);
+                    newCosts[idx] = null;
                     t.set('card','shared','costs', newCosts);
                     return t.closePopup();
                   }
