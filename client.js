@@ -151,7 +151,7 @@ var getBoardButtons = function(t) {
                 var listSums = {};
                 var columnEntries = [];
                 cards.forEach(function(card, cardIdx){ 
-                  if (costArray[cardIdx]) {
+                  if (costArray[cardIdx] && costArray[cardIdx][idx]) {
                     if (card.labels.length > 0) {
                       card.labels.forEach(function(label) {
                         var displayName = label.name || label.color;
